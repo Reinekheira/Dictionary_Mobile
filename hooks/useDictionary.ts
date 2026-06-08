@@ -32,6 +32,24 @@ export function useDictionary(): UseDictionaryReturn {
       return null;
     }
 
+    if (trimmed.split(/\s+/).length > 1) {
+      setError('Please search for one word, not a sentence.');
+      setStatus('error');
+      return null;
+    }
+
+    if (/\d/.test(trimmed)) {
+      setError('Please search for a word instead of numbers.');
+      setStatus('error');
+      return null;
+    }
+
+    if (/[^a-zA-Z\s'-]/.test(trimmed)) {
+      setError('Please search for a word instead of numbers.');
+      setStatus('error');
+      return null;
+    }
+
     setStatus('loading');
     setError(null);
     setEntry(null);

@@ -6,7 +6,9 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  TouchableOpacity,
 } from 'react-native';
+import { Square } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SearchBar } from '@/components/SearchBar';
 import { AudioSourcesList, DisabledAudioButton } from '@/components/AudioButton';
@@ -93,12 +95,25 @@ export default function WordDetailScreen() {
                 {phoneticText && <Text style={styles.phoneticText}>{phoneticText}</Text>}
               </View>
               {hasPronunciation ? (
-                <AudioSourcesList
-                  sources={audioSources}
-                  playbackState={playbackState}
-                  activeAudioUrl={activeAudioUrl}
-                  onToggle={togglePlayPause}
-                />
+                <View style={styles.audioControlsContainer}>
+                  <AudioSourcesList
+                    sources={audioSources}
+                    playbackState={playbackState}
+                    activeAudioUrl={activeAudioUrl}
+                    onToggle={togglePlayPause}
+                  />
+                  {(playbackState === 'playing' || playbackState === 'paused') && (
+                    <TouchableOpacity
+                      style={styles.stopButton}
+                      onPress={stop}
+                      activeOpacity={0.7}
+                      accessibilityLabel="Stop pronunciation"
+                      accessibilityRole="button"
+                    >
+                      <Square size={18} color={Colors.error[500]} fill={Colors.error[500]} />
+                    </TouchableOpacity>
+                  )}
+                </View>
               ) : (
                 <DisabledAudioButton />
               )}
@@ -240,5 +255,20 @@ const styles = StyleSheet.create({
   sourceText: {
     ...Typography.bodySmall,
     color: Colors.primary[500],
+  },
+  audioControlsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  stopButton: {
+    width: 44,
+    height: 44,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.error[50],
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.error[100],
   },
 });

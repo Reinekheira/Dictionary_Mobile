@@ -2,7 +2,7 @@ import { useState, useCallback, useRef } from 'react';
 import { Audio } from 'expo-av';
 import { Phonetic } from '@/types/dictionary';
 
-export type PlaybackState = 'idle' | 'playing' | 'paused';
+export type PlaybackState = 'idle' | 'playing' | 'paused' | 'stopped';
 
 interface UseAudioReturn {
   playbackState: PlaybackState;
@@ -41,7 +41,7 @@ export function useAudio(): UseAudioReturn {
       }
       await unloadSound();
     }
-    setPlaybackState('idle');
+    setPlaybackState('stopped');
     setActiveAudioUrl(null);
   }, [unloadSound]);
 
@@ -123,7 +123,11 @@ export function useAudio(): UseAudioReturn {
 
   const togglePlayPause = useCallback(
     async (audioUrl: string) => {
-      if (playbackState === 'idle' || activeAudioUrl !== audioUrl) {
+      if (
+        playbackState === 'idle' ||
+        playbackState === 'stopped' ||
+        activeAudioUrl !== audioUrl
+      ) {
         await play(audioUrl);
       } else if (playbackState === 'playing' && activeAudioUrl === audioUrl) {
         await pause();
