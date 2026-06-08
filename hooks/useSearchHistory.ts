@@ -24,6 +24,16 @@ function saveHistory(items: SearchHistoryItem[]) {
   }
 }
 
+// Module-level global state and listeners to synchronize all useSearchHistory hook instances
+let globalHistory: SearchHistoryItem[] = loadHistory();
+const listeners = new Set<(items: SearchHistoryItem[]) => void>();
+
+function updateGlobalHistory(newHistory: SearchHistoryItem[]) {
+  globalHistory = newHistory;
+  saveHistory(newHistory);
+  listeners.forEach((listener) => listener(newHistory));
+}
+
 interface UseSearchHistoryReturn {
   history: SearchHistoryItem[];
   addToHistory: (word: string) => void;
@@ -32,29 +42,33 @@ interface UseSearchHistoryReturn {
 }
 
 export function useSearchHistory(): UseSearchHistoryReturn {
-  const [history, setHistory] = useState<SearchHistoryItem[]>(loadHistory);
+  const [history, setHistory] = useState<SearchHistoryItem[]>(globalHistory);
 
   useEffect(() => {
-    saveHistory(history);
-  }, [history]);
+    listeners.add(setHistory);
+    return () => {
+      listeners.delete(setHistory);
+    };
+  }, []);
 
   const addToHistory = useCallback((word: string) => {
     const trimmed = word.trim().toLowerCase();
     if (!trimmed) return;
 
-    setHistory((prev) => {
-      const filtered = prev.filter((item) => item.word !== trimmed);
-      return [{ word: trimmed, searchedAt: Date.now() }, ...filtered].slice(0, MAX_HISTORY);
-    });
+    const filtered = globalHistory.filter((item) => item.word !== trimmed);
+    const newHistory = [{ word: trimmed, searchedAt: Date.now() }, ...filtered].slice(0, MAX_HISTORY);
+    updateGlobalHistory(newHistory);
   }, []);
 
   const clearHistory = useCallback(() => {
-    setHistory([]);
+    updateGlobalHistory([]);
   }, []);
 
   const removeFromHistory = useCallback((word: string) => {
-    setHistory((prev) => prev.filter((item) => item.word !== word.toLowerCase()));
+    const newHistory = globalHistory.filter((item) => item.word !== word.toLowerCase());
+    updateGlobalHistory(newHistory);
   }, []);
 
   return { history, addToHistory, clearHistory, removeFromHistory };
 }
+
